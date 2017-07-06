@@ -1,0 +1,49 @@
+name: Clicksend Form Notifier
+version: 1.0.0
+description: A simple Grav plugin that allows you to send SMS notification every time someone submits your Grav form.
+icon: plug
+author:
+  name: ClickSend
+  email: support@clicksend.com
+homepage: https://github.com/clicksend/grav-form-notifier
+demo: https://clicksend.com
+keywords: grav,plugin,clicksend,form,sms
+bugs: https://github.com/clicksend/grav-form-notifier/issues
+docs: https://github.com/clicksend/grav-form-notifier/blob/develop/README.md
+license: MIT
+dependencies:
+  - form
+
+form:
+  validation: strict
+  fields:
+    enabled:
+      type: toggle
+      label: Plugin status
+      highlight: 1
+      default: 0
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+    username:
+      type: text
+      label: Username
+      help: Your ClickSend username.
+    api_key:
+      type: password
+      label: API Key
+      help: Your ClickSend API key.
+    from:
+      type: text
+      label: From
+      help: The name or phone where the SMS notification is coming from.
+    to:
+      type: text
+      label: To
+      help: The phone where the SMS notification will be sent to.
+    body:
+      type: text
+      label: Notification Message
+      help: The notification message you want to send.

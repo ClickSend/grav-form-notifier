@@ -1,0 +1,6 @@
+enabled: true
+username: your-clicksend-username
+api_key: your-clicksend-password
+from: 'From'
+to: '09171234567'
+body: 'You have new form submission on your {{FORM_NAME}} form.'
