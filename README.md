@@ -35,9 +35,13 @@ Here is the default configuration and an explanation of available options:
 enabled: true
 username: your-clicksend-username
 api_key: your-clicksend-password
+enable_notification: true
 from: 'From'
 to: '09171234567'
 body: 'You have new form submission on your {{FORM_NAME}} form.'
+enable_auto_response: true
+phone_field: 'phone'
+auto_response_msg: 'Thank you for reaching us.'
 ```
 
 ## Usage

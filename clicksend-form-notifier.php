@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\ClientException;
 
 /**
  * Class ClicksendFormNotifyPlugin
+ *
  * @package Grav\Plugin
  */
 class ClicksendFormNotifierPlugin extends Plugin
@@ -21,7 +22,7 @@ class ClicksendFormNotifierPlugin extends Plugin
      * Constructor.
      *
      * @param string $name
-     * @param Grav $grav
+     * @param Grav   $grav
      * @param Config $config
      */
     public function __construct($name, Grav $grav, Config $config = null)
@@ -29,7 +30,7 @@ class ClicksendFormNotifierPlugin extends Plugin
 
         $this->client = new Client([
             'base_uri' => 'http://rest.clicksend.com',
-            'timeout' => 5
+            'timeout'  => 5,
         ]);
 
         parent::__construct($name, $grav, $config);
@@ -48,7 +49,7 @@ class ClicksendFormNotifierPlugin extends Plugin
     public static function getSubscribedEvents()
     {
         return [
-            'onPluginsInitialized' => ['onPluginsInitialized', 0]
+            'onPluginsInitialized' => ['onPluginsInitialized', 0],
         ];
     }
 
@@ -58,13 +59,13 @@ class ClicksendFormNotifierPlugin extends Plugin
     public function onPluginsInitialized()
     {
         // Don't proceed if we are in the admin plugin
-        if ($this->isAdmin() OR !$this->isFormTriggered()) {
+        if ($this->isAdmin() OR ! $this->isFormTriggered()) {
             return;
         }
 
         // Enable the main event we are interested in
         $this->enable([
-            'onFormProcessed' => ['onFormProcessed', 0]
+            'onFormProcessed' => ['onFormProcessed', 0],
         ]);
     }
 
@@ -72,16 +73,49 @@ class ClicksendFormNotifierPlugin extends Plugin
     {
         $referer = $this->getReferrer($this->grav['uri']);
 
-        $username = $this->config->get('plugins.clicksend-form-notifier.username');
-        $apiKey = $this->config->get('plugins.clicksend-form-notifier.api_key');
-        $from = $this->config->get('plugins.clicksend-form-notifier.from');
-        $to = $this->config->get('plugins.clicksend-form-notifier.to');
-        $body = $this->config->get('plugins.clicksend-form-notifier.body');
+        $enable_notification = $this->config->get('plugins.clicksend-form-notifier.enable_notification');
+        $username            = $this->config->get('plugins.clicksend-form-notifier.username');
+        $apiKey              = $this->config->get('plugins.clicksend-form-notifier.api_key');
+        $from                = $this->config->get('plugins.clicksend-form-notifier.from');
+        $to                  = $this->config->get('plugins.clicksend-form-notifier.to');
+        $body                = $this->config->get('plugins.clicksend-form-notifier.body');
+
+        $enable_auto_response = $this->config->get('plugins.clicksend-form-notifier.enable_auto_response');
+        $phone_field          = $this->config->get('plugins.clicksend-form-notifier.phone_field');
+        $auto_response_msg    = $this->config->get('plugins.clicksend-form-notifier.auto_response_msg');
+
+        $messagesPayload = [];
 
         $formName = $this->getFormName();
 
         // Replace placeholders.
-        $body = trim(str_replace('{{FORM_NAME}}', $formName, $body));
+        $body              = trim(str_replace('{{FORM_NAME}}', $formName, $body));
+        $auto_response_msg = trim(str_replace('{{FORM_NAME}}', $formName, $auto_response_msg));
+
+        // Phone field value.
+        $phone = (isset($_POST['data'][$phone_field]) AND ! empty($_POST['data'][$phone_field])) ? $_POST['data'][$phone_field] : '';
+
+        // Prepare message payload.
+        if ($enable_notification AND $to AND $body) {
+
+            $messagesPayload[] = [
+                'source' => 'grav',
+                'from'   => $from,
+                'to'     => $to,
+                'body'   => $body,
+            ];
+
+        }
+
+        if ($enable_auto_response AND $phone AND $auto_response_msg) {
+
+            $messagesPayload[] = [
+                'source' => 'grav',
+                'from'   => $from,
+                'to'     => $phone,
+                'body'   => $auto_response_msg,
+            ];
+        }
 
         // Send SMS notification message.
         try {
@@ -89,32 +123,25 @@ class ClicksendFormNotifierPlugin extends Plugin
             $response = $this->client->post('v3/sms/send', [
                 'auth' => [$username, $apiKey],
                 'json' => [
-                    'messages' => [
-                        [
-                            'source' => 'grav',
-                            'from' => $from,
-                            'to' => $to,
-                            'body' => $body
-                        ]
-                    ]
-                ]
+                    'messages' => $messagesPayload,
+                ],
             ]);
 
             $result = \GuzzleHttp\json_decode($response->getBody());
 
             if ($response->getStatusCode() == 200) {
 
-                return $this->grav->redirect($referer . '?' . http_build_query(['submitted' => 'sent']));
+                return $this->grav->redirect($referer.'?'.http_build_query(['submitted' => 'sent']));
 
             }
 
-            return $this->grav->redirect($referer . '?' . http_build_query(['submitted' => 'not_sent', 'error' => $result->response_code]));
+            return $this->grav->redirect($referer.'?'.http_build_query(['submitted' => 'not_sent', 'error' => $result->response_code]));
 
         } catch (ClientException $e) {
 
             $result = \GuzzleHttp\json_decode($e->getResponse()->getBody());
 
-            return $this->grav->redirect($referer . '?' . http_build_query(['submitted' => 'not_sent', 'error' => $result->response_code]));
+            return $this->grav->redirect($referer.'?'.http_build_query(['submitted' => 'not_sent', 'error' => $result->response_code]));
 
         }
 
@@ -144,6 +171,7 @@ class ClicksendFormNotifierPlugin extends Plugin
      * Get base referrer.
      *
      * @param Uri $uri
+     *
      * @return array|string
      */
     private function getReferrer(Uri $uri)
