@@ -48,3 +48,12 @@ auto_response_msg: 'Thank you for reaching us.'
 
 * Create your Grav form. See: [Forms](https://learn.getgrav.org/forms)
 * That's it. You should now be able to receive SMS notification automatically.
+
+
+## Something is wrong?
+
+Make sure you've updated your composer.json file and update your dependencies.
+
+* Add `"guzzlehttp/guzzle": "^6.3"` in your `composer.json` file.
+* Run command: `composer update --prefer-dist -vvv --profile`
+* Check the plugin `clicksend-form-notifier.yaml` file if you've added the right config values.
